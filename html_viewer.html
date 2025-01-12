@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML 뷰어</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+        }
+        #content {
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div id="content"></div>
+
+    <script>
+        async function loadHTML() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const url = urlParams.get('url');
+            if (url) {
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    const html = await response.text();
+                    document.getElementById('content').innerHTML = html;
+                } catch (error) {
+                    console.error('Error:', error);
+                    document.getElementById('content').innerHTML = '<p>Error loading content. Please try again later.</p>';
+                }
+            } else {
+                document.getElementById('content').innerHTML = '<p>No URL provided.</p>';
+            }
+        }
+
+        window.onload = loadHTML;
+    </script>
+</body>
+</html>
