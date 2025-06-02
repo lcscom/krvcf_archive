@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KR VCF Newsletter List</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .search-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border: 1px solid #e9ecef;
+        }
+        .search-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .search-controls label {
+            font-weight: bold;
+            color: #495057;
+        }
+        .search-controls input[type="date"] {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .search-controls button {
+            padding: 8px 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .search-controls button:hover {
+            background-color: #2980b9;
+        }
+        .search-controls button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .list {
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #3498db;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 700px;
+            border-radius: 5px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .info-text {
+            text-align: right;
+            color: #6c757d;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .no-results {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Daily ETEVERS/VMware Newsletter List</h1>
+        
+        <div class="search-section">
+            <h3 style="margin-top: 0; color: #495057;">검색 옵션</h3>
+            <div class="search-controls">
+                <label for="search-mode">검색 모드:</label>
+                <select id="search-mode" style="padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                    <option value="recent">최근 30일</option>
+                    <option value="specific">특정 날짜</option>
+                    <option value="range">날짜 범위</option>
+                </select>
+                
+                <div id="date-controls" style="display: none;">
+                    <label for="start-date">시작 날짜:</label>
+                    <input type="date" id="start-date">
+                    
+                    <label for="end-date" id="end-date-label" style="display: none;">종료 날짜:</label>
+                    <input type="date" id="end-date" style="display: none;">
+                </div>
+                
+                <button id="search-btn">검색</button>
+                <button id="clear-btn">초기화</button>
+            </div>
+        </div>
+
+        <div class="info-text" id="info-text">
+            최근 30일 뉴스레터를 불러옵니다<br>
+            로딩시 최대 5초의 시간이 걸릴 수 있습니다
+        </div>
+
+        <div class="list">
+            <h2>Newsletter</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>업로드 날짜</th>
+                        <th>파일 이름</th>
+                        <th>보기</th>
+                    </tr>
+                </thead>
+                <tbody id="file-list-1"></tbody>
+            </table>
+        </div>
+
+        <div class="list">
+            <h2>Newsletter ETEVERS</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>업로드 날짜</th>
+                        <th>파일 이름</th>
+                        <th>보기</th>
+                    </tr>
+                </thead>
+                <tbody id="file-list-2"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+<script>
+    const repos = [
+        { 
+            name: 'krvcf_newsletter', 
+            listId: 'file-list-1',
+            fileNameFormat: (date) => `newsletter_${date.toISOString().split('T')[0]}.html`
+        },
+        { 
+            name: 'krvcf_newsletter_etevers', 
+            listId: 'file-list-2',
+            fileNameFormat: (date) => `newsletter_etevers_${date.toISOString().split('T')[0]}.html`
+        }
+    ];
+
+    // 검색 모드 변경 이벤트
+    document.getElementById('search-mode').addEventListener('change', function() {
+        const mode = this.value;
+        const dateControls = document.getElementById('date-controls');
+        const endDateLabel = document.getElementById('end-date-label');
+        const endDate = document.getElementById('end-date');
+        const infoText = document.getElementById('info-text');
+        
+        if (mode === 'recent') {
+            dateControls.style.display = 'none';
+            infoText.innerHTML = '최근 30일 뉴스레터를 불러옵니다<br>로딩시 최대 5초의 시간이 걸릴 수 있습니다';
+        } else if (mode === 'specific') {
+            dateControls.style.display = 'inline-block';
+            endDateLabel.style.display = 'none';
+            endDate.style.display = 'none';
+            infoText.innerHTML = '특정 날짜의 뉴스레터를 검색합니다<br>날짜를 선택하고 검색 버튼을 클릭하세요';
+        } else if (mode === 'range') {
+            dateControls.style.display = 'inline-block';
+            endDateLabel.style.display = 'inline';
+            endDate.style.display = 'inline-block';
+            infoText.innerHTML = '날짜 범위의 뉴스레터를 검색합니다<br>시작 날짜와 종료 날짜를 선택하고 검색 버튼을 클릭하세요';
+        }
+    });
+
+    // 검색 버튼 이벤트
+    document.getElementById('search-btn').addEventListener('click', function() {
+        clearAllTables();
+        const mode = document.getElementById('search-mode').value;
+        
+        if (mode === 'recent') {
+            loadRecentFiles();
+        } else if (mode === 'specific') {
+            const date = document.getElementById('start-date').value;
+            if (!date) {
+                alert('날짜를 선택해주세요.');
+                return;
+            }
+            loadSpecificDate(new Date(date));
+        } else if (mode === 'range') {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            if (!startDate || !endDate) {
+                alert('시작 날짜와 종료 날짜를 모두 선택해주세요.');
+                return;
+            }
+            if (new Date(startDate) > new Date(endDate)) {
+                alert('시작 날짜는 종료 날짜보다 이전이어야 합니다.');
+                return;
+            }
+            loadDateRange(new Date(startDate), new Date(endDate));
+        }
+    });
+
+    // 초기화 버튼 이벤트
+    document.getElementById('clear-btn').addEventListener('click', function() {
+        clearAllTables();
+        document.getElementById('search-mode').value = 'recent';
+        document.getElementById('search-mode').dispatchEvent(new Event('change'));
+        document.getElementById('start-date').value = '';
+        document.getElementById('end-date').value = '';
+    });
+
+    function clearAllTables() {
+        repos.forEach(repo => {
+            document.getElementById(repo.listId).innerHTML = '';
+        });
+    }
+
+    function loadRecentFiles() {
+        repos.forEach(repo => fetchFileList(repo, 'recent'));
+    }
+
+    function loadSpecificDate(date) {
+        repos.forEach(repo => fetchFileList(repo, 'specific', date));
+    }
+
+    function loadDateRange(startDate, endDate) {
+        repos.forEach(repo => fetchFileList(repo, 'range', startDate, endDate));
+    }
+
+    async function fetchFileList(repo, mode = 'recent', startDate = null, endDate = null) {
+        const baseUrl = `https://raw.githubusercontent.com/lcscom/${repo.name}/main/`;
+        const files = [];
+        const currentDate = new Date();
+        
+        let datesToCheck = [];
+        
+        if (mode === 'recent') {
+            for (let i = 0; i < 30; i++) {
+                const date = new Date(currentDate);
+                date.setDate(date.getDate() - i);
+                datesToCheck.push(date);
+            }
+        } else if (mode === 'specific') {
+            datesToCheck.push(startDate);
+        } else if (mode === 'range') {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                datesToCheck.push(new Date(d));
+            }
+        }
+        
+        for (const date of datesToCheck) {
+            const fileName = repo.fileNameFormat(date);
+            const url = baseUrl + fileName;
+            
+            try {
+                const response = await fetch(url, { method: 'HEAD' });
+                if (response.ok) {
+                    files.push({ name: fileName, downloadUrl: url, uploadDate: date });
+                }
+            } catch (error) {
+                console.error('Error checking file:', error);
+            }
+        }
+
+        files.sort((a, b) => b.uploadDate - a.uploadDate);
+        
+        if (files.length === 0) {
+            addNoResultsMessage(repo.listId);
+        } else {
+            files.forEach(file => addFileToTable(file, repo.listId));
+        }
+    }
+
+    function addNoResultsMessage(listId) {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="3" class="no-results">해당 날짜의 뉴스레터를 찾을 수 없습니다.</td>';
+        document.getElementById(listId).appendChild(row);
+    }
+
+    function addFileToTable(file, listId) {
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
+            <td>${file.uploadDate.toLocaleString()}</td>
+            <td>${file.name}</td>
+            <td><a href="#" data-url="${file.downloadUrl}">열기</a></td>`;
+        
+        document.getElementById(listId).appendChild(row);
+
+        row.querySelector('a').addEventListener('click', async (event) => {
+            event.preventDefault();
+            const modalBody = document.getElementById('modal-body');
+            modalBody.innerHTML = '로딩 중...';
+            
+            try {
+                const fileResponse = await fetch(file.downloadUrl);
+                if (!fileResponse.ok) throw new Error('Error fetching file content');
+                
+                const fileContent = await fileResponse.text();
+                modalBody.innerHTML = fileContent;
+                document.getElementById('myModal').style.display = "block";
+            } catch (error) {
+                console.error('Error:', error);
+                modalBody.innerHTML = `파일을 불러오는 데 오류가 발생했습니다: ${error.message}`;
+            }   
+        });
+    }
+
+    window.onload = () => {
+        loadRecentFiles();
+    };
+
+    document.querySelector('.close').onclick = function() {
+        document.getElementById("myModal").style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == document.getElementById("myModal")) {
+            document.getElementById("myModal").style.display = "none";
+        }
+    }
+</script>
+
+</body>
+</html>
