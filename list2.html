@@ -151,7 +151,8 @@
             <div class="search-controls">
                 <label for="search-mode">검색 모드:</label>
                 <select id="search-mode" style="padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
-                    <option value="recent">최근 30일</option>
+                    <option value="recent5">최근 5일 (빠른 로딩)</option>
+                    <option value="recent30">최근 30일</option>
                     <option value="specific">특정 날짜</option>
                     <option value="range">날짜 범위</option>
                 </select>
@@ -170,8 +171,8 @@
         </div>
 
         <div class="info-text" id="info-text">
-            최근 30일 뉴스레터를 불러옵니다<br>
-            로딩시 최대 5초의 시간이 걸릴 수 있습니다
+            최근 5일 뉴스레터를 빠르게 불러옵니다<br>
+            더 많은 뉴스레터를 보려면 검색 옵션을 변경하세요
         </div>
 
         <div class="list">
@@ -232,7 +233,10 @@
         const endDate = document.getElementById('end-date');
         const infoText = document.getElementById('info-text');
         
-        if (mode === 'recent') {
+        if (mode === 'recent5') {
+            dateControls.style.display = 'none';
+            infoText.innerHTML = '최근 5일 뉴스레터를 빠르게 불러옵니다<br>더 많은 뉴스레터를 보려면 검색 옵션을 변경하세요';
+        } else if (mode === 'recent30') {
             dateControls.style.display = 'none';
             infoText.innerHTML = '최근 30일 뉴스레터를 불러옵니다<br>로딩시 최대 5초의 시간이 걸릴 수 있습니다';
         } else if (mode === 'specific') {
@@ -253,8 +257,10 @@
         clearAllTables();
         const mode = document.getElementById('search-mode').value;
         
-        if (mode === 'recent') {
-            loadRecentFiles();
+        if (mode === 'recent5') {
+            loadRecentFiles(5);
+        } else if (mode === 'recent30') {
+            loadRecentFiles(30);
         } else if (mode === 'specific') {
             const date = document.getElementById('start-date').value;
             if (!date) {
@@ -280,7 +286,7 @@
     // 초기화 버튼 이벤트
     document.getElementById('clear-btn').addEventListener('click', function() {
         clearAllTables();
-        document.getElementById('search-mode').value = 'recent';
+        document.getElementById('search-mode').value = 'recent5';
         document.getElementById('search-mode').dispatchEvent(new Event('change'));
         document.getElementById('start-date').value = '';
         document.getElementById('end-date').value = '';
@@ -292,8 +298,8 @@
         });
     }
 
-    function loadRecentFiles() {
-        repos.forEach(repo => fetchFileList(repo, 'recent'));
+    function loadRecentFiles(days = 5) {
+        repos.forEach(repo => fetchFileList(repo, 'recent', null, null, days));
     }
 
     function loadSpecificDate(date) {
@@ -304,7 +310,7 @@
         repos.forEach(repo => fetchFileList(repo, 'range', startDate, endDate));
     }
 
-    async function fetchFileList(repo, mode = 'recent', startDate = null, endDate = null) {
+    async function fetchFileList(repo, mode = 'recent', startDate = null, endDate = null, days = 5) {
         const baseUrl = `https://raw.githubusercontent.com/lcscom/${repo.name}/main/`;
         const files = [];
         const currentDate = new Date();
@@ -312,7 +318,7 @@
         let datesToCheck = [];
         
         if (mode === 'recent') {
-            for (let i = 0; i < 30; i++) {
+            for (let i = 0; i < days; i++) {
                 const date = new Date(currentDate);
                 date.setDate(date.getDate() - i);
                 datesToCheck.push(date);
@@ -385,8 +391,9 @@
         });
     }
 
+    // 페이지 로드 시 최근 5일만 빠르게 로드
     window.onload = () => {
-        loadRecentFiles();
+        loadRecentFiles(5);
     };
 
     document.querySelector('.close').onclick = function() {
